@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>User Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Hello, {{ username }}! 👋</h1>
+        <p>Welcome to your personalized page.</p>
+
+        {% if username.lower() == "komal" %}
+            <p>Hey Komal! You are the owner of this application. 😊</p>
+        {% elif username|length <= 5 %}
+            <p>Feel free to explore the site, {{ username }}!</p>
+        {% else %}
+            <p>Hope you enjoy our site, {{ username }}!</p>
+        {% endif %}
+
+        <a href="{{ url_for('home') }}" class="btn">Back to Home</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Flask Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Flask Application!</h1>
+        <p>This app demonstrates dynamic template rendering using Jinja2.</p>
+        <a href="{{ url_for('user', username='Komal') }}" class="btn">Visit Komal's Page</a>
+        <a href="{{ url_for('user', username='Guest') }}" class="btn">Visit Guest Page</a>
+        <p>Or Else</p>
+        <form action="{{url_for('user_redirect')}}" method="get">
+            Enter Your Name : 
+            <input type="text" name="name">
+            <button type="submit" class="btn">Visit Your Page</button>
+        </form>
+        
+
+    </div>
+</body>
+</html>
