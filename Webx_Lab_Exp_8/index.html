@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="bookApp">
+<head>
+  <meta charset="UTF-8">
+  <title>Stylish AngularJS App</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 650px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #4e9af1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #3a84d8;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .success { color: green; }
+    .error { color: red; }
+
+    .card-grid {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .card {
+      flex: 1 1 150px;
+      background: #f3f9ff;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      background: #d8edff;
+    }
+
+    .section {
+      margin-top: 30px;
+    }
+
+    .section h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 10px;
+      background: #f7f7f7;
+      margin-bottom: 8px;
+      border-radius: 8px;
+    }
+
+    .logout-btn {
+      margin-top: 20px;
+      background: #ff5c5c;
+    }
+
+    .logout-btn:hover {
+      background: #e04b4b;
+    }
+
+    @media(max-width: 500px) {
+      .card-grid {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body ng-controller="MainController">
+
+  <div class="container" ng-if="!isLoggedIn">
+    <h2>🔐 Login to Continue</h2>
+    <input type="text" ng-model="user.username" placeholder="Username">
+    <input type="password" ng-model="user.password" placeholder="Password">
+    <button ng-click="login()">Login</button>
+    <div class="message">
+      <p class="success" ng-if="loginSuccess">{{ loginSuccess }}</p>
+      <p class="error" ng-if="loginError">{{ loginError }}</p>
+    </div>
+  </div>
+
+  <div class="container" ng-if="isLoggedIn">
+    <h2>🎉 Welcome, {{ user.username }}</h2>
+
+    <div class="card-grid">
+      <div class="card" ng-click="showSection('oneWay')">🔁 One-Way Binding</div>
+      <div class="card" ng-click="showSection('twoWay')">🔄 Two-Way Binding</div>
+      <div class="card" ng-click="showSection('books')">📚 Book Search</div>
+    </div>
+
+    <div class="section" ng-if="activeSection === 'oneWay'">
+      <h3>🔁 One-Way Binding</h3>
+      <p>Message: <strong>{{ oneWayMessage }}</strong></p>
+    </div>
+
+    <div class="section" ng-if="activeSection === 'twoWay'">
+      <h3>🔄 Two-Way Binding</h3>
+      <input type="text" ng-model="twoWayMessage" placeholder="Type something...">
+      <p>You typed: <strong>{{ twoWayMessage }}</strong></p>
+    </div>
+
+    <div class="section" ng-if="activeSection === 'books'">
+      <h3>📚 Book Search</h3>
+      <input type="text" ng-model="searchText" placeholder="Search title, author, or genre">
+      <ul>
+        <li ng-repeat="book in books | bookFilter:searchText">
+          <strong>{{ book.title }}</strong> by {{ book.author }} ({{ book.genre }})
+        </li>
+      </ul>
+    </div>
+
+    <button class="logout-btn" ng-click="logout()">Logout</button>
+  </div>
+
+  <script>
+    var app = angular.module('bookApp', []);
+
+    app.factory('AuthService', function () {
+      var validUser = { username: 'admin', password: '1234' };
+      return {
+        login: function (user) {
+          return user.username === validUser.username && user.password === validUser.password;
+        }
+      };
+    });
+
+    app.filter('bookFilter', function () {
+      return function (books, searchText) {
+        if (!searchText) return books;
+        var filtered = [];
+        searchText = searchText.toLowerCase();
+        angular.forEach(books, function (book) {
+          if (
+            book.title.toLowerCase().includes(searchText) ||
+            book.author.toLowerCase().includes(searchText) ||
+            book.genre.toLowerCase().includes(searchText)
+          ) {
+            filtered.push(book);
+          }
+        });
+        return filtered;
+      };
+    });
+
+    app.controller('MainController', function ($scope, AuthService) {
+      $scope.user = {};
+      $scope.isLoggedIn = false;
+      $scope.activeSection = null;
+
+      $scope.login = function () {
+        if (AuthService.login($scope.user)) {
+          $scope.isLoggedIn = true;
+          $scope.loginSuccess = "Login successful!";
+          $scope.loginError = "";
+        } else {
+          $scope.loginError = "Invalid username or password.";
+          $scope.loginSuccess = "";
+        }
+      };
+
+      $scope.logout = function () {
+        $scope.isLoggedIn = false;
+        $scope.user = {};
+        $scope.activeSection = null;
+      };
+
+      $scope.showSection = function (section) {
+        $scope.activeSection = section;
+      };
+
+      $scope.oneWayMessage = "Welcome to One-Way Binding!";
+      $scope.twoWayMessage = "";
+
+      $scope.books = [
+        { title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy" },
+        { title: "1984", author: "George Orwell", genre: "Dystopian" },
+        { title: "The Alchemist", author: "Paulo Coelho", genre: "Fiction" },
+        { title: "Sapiens", author: "Yuval Noah Harari", genre: "History" }
+      ];
+    });
+  </script>
+
+</body>
+</html>
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en" ng-app="bookApp">
+<head>
+  <meta charset="UTF-8">
+  <title>AngularJS UI App</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .message { text-align: center; margin-top: 10px; }
+    .success { color: green; }
+    .error { color: red; }
+    .card-grid {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card {
+      background-color: #e9f5ff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 170px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .card:hover {
+      background-color: #cde8ff;
+    }
+    .section {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body ng-controller="MainController">
+
+  <div class="container" ng-if="!isLoggedIn">
+    <h2>Login</h2>
+    <input type="text" ng-model="user.username" placeholder="Username" required>
+    <input type="password" ng-model="user.password" placeholder="Password" required>
+    <button ng-click="login()">Login</button>
+    <div class="message">
+      <p class="success" ng-if="loginSuccess">{{ loginSuccess }}</p>
+      <p class="error" ng-if="loginError">{{ loginError }}</p>
+    </div>
+  </div>
+
+  <div class="container" ng-if="isLoggedIn">
+
+    <h2>Welcome, {{ user.username }}</h2>
+
+    <div class="card-grid">
+      <div class="card" ng-click="showSection('oneWay')">One-Way Binding</div>
+      <div class="card" ng-click="showSection('twoWay')">Two-Way Binding</div>
+      <div class="card" ng-click="showSection('books')">Book Search</div>
+    </div>
+
+    <!-- One-Way Binding -->
+    <!-- <div class="section" ng-if="activeSection === 'oneWay'">
+      <h3>One-Way Binding</h3>
+      <p>Message: <strong>{{ oneWayMessage }}</strong></p>
+    </div>
+
+    <!-- Two-Way Binding -->
+    <!-- <div class="section" ng-if="activeSection === 'twoWay'">
+      <h3>Two-Way Binding</h3>
+      <input type="text" ng-model="twoWayMessage" placeholder="Type something...">
+      <p>You typed: <strong>{{ twoWayMessage }}</strong></p>
+    </div> -->
+
+    <!-- Book Search -->
+    <!-- <div class="section" ng-if="activeSection === 'books'">
+      <h3>Book Search</h3>
+      <input type="text" ng-model="searchText" placeholder="Search title, author, or genre">
+      <ul>
+        <li ng-repeat="book in books | bookFilter:searchText">
+          <strong>{{ book.title }}</strong> by {{ book.author }} ({{ book.genre }})
+        </li>
+      </ul>
+    </div> -->
+
+  <!-- </div>
+
+  <script> -->
+    <!-- // Module
+    var app = angular.module('bookApp', []);
+
+    // Service for login
+    app.factory('AuthService', function () {
+      var validUser = { username: 'admin', password: '1234' };
+      return {
+        login: function (user) {
+          return user.username === validUser.username && user.password === validUser.password;
+        }
+      };
+    });
+
+    // Custom filter
+    app.filter('bookFilter', function () {
+      return function (books, searchText) {
+        if (!searchText) return books;
+        var filtered = [];
+        searchText = searchText.toLowerCase();
+        angular.forEach(books, function (book) {
+          if (
+            book.title.toLowerCase().includes(searchText) ||
+            book.author.toLowerCase().includes(searchText) ||
+            book.genre.toLowerCase().includes(searchText)
+          ) {
+            filtered.push(book);
+          }
+        });
+        return filtered;
+      };
+    });
+
+    // Controller
+    app.controller('MainController', function ($scope, AuthService) {
+      $scope.user = {};
+      $scope.isLoggedIn = false;
+      $scope.activeSection = null;
+
+      $scope.login = function () {
+        if (AuthService.login($scope.user)) {
+          $scope.isLoggedIn = true;
+          $scope.loginSuccess = "Login successful!";
+          $scope.loginError = "";
+        } else {
+          $scope.loginError = "Invalid username or password.";
+          $scope.loginSuccess = "";
+        }
+      };
+
+      $scope.showSection = function (section) {
+        $scope.activeSection = section;
+      };
+
+      // Data Binding
+      $scope.oneWayMessage = "Welcome to AngularJS One-Way Binding!";
+      $scope.twoWayMessage = "";
+
+      // Books
+      $scope.books = [
+        { title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy" },
+        { title: "1984", author: "George Orwell", genre: "Dystopian" },
+        { title: "The Alchemist", author: "Paulo Coelho", genre: "Fiction" },
+        { title: "Sapiens", author: "Yuval Noah Harari", genre: "History" }
+      ];
+    });
+  </script>
+</body>
+</html> -->
